@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:se380_during_lecture/other.dart';
 import 'package:se380_during_lecture/stack_page.dart';
+import 'package:se380_during_lecture/student.dart';
 
 int i = 10;
 
 void main() {
+  Person p1 = const Person('ali');
+  Person p2 = const Person('aoeuaou');
+
+  print(p1 == p2);
+
   final li = <int>[];
   // li = [5];
   li.add(4);
@@ -42,21 +48,52 @@ void main() {
 
   print(ll);
 
-  MyNiceClass m = new MyNiceClass(indentation: 3);
+  MyNiceClass m = MyNiceClass(indentation: 3);
   m.len();
   m.myNiceFunction(howManyTimes: 5);
   m.myNiceFunction2(5);
   myFunc(m);
   // print(m._indentation);
 
+  MyNiceClass refNonNullable;
+  MyNiceClass? refNullable; // java-like
+
+  // print(refNonNullable);
+  print(refNullable);
+
+  if (refNullable == null) {
+    print('it is null');
+  }
+
+  refNullable = MyNiceClass(indentation: 3);
+
+  refNonNullable = MyNiceClass(indentation: 3);
+  refNonNullable.indentation;
+
   runApp(new MyApp());
+}
+
+class Person {
+  final String name;
+  const Person(this.name);
 }
 
 class MyNiceClass {
   int indentation;
-  MyNiceClass({required this.indentation});
+  // MyNiceClass refNonNullable;
+  MyNiceClass? refNullable; // java-like
+
+  Person p;
+
+  MyNiceClass({
+    required this.indentation,
+    // required this.refNonNullable,
+    this.p = const Person('unknown'),
+  }) {}
 
   void myNiceFunction({required int howManyTimes, int stepSize = 1}) {
+    int i;
+
     print('MyNiceClass.myNiceFunction()');
     for (int j = 0; j < howManyTimes; j += stepSize) {
       print('${' ' * indentation} $j');
@@ -111,14 +148,50 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String val = '';
-  var names = <String>[];
+  var students = <Student>[];
   var isLoading = false;
+
+  late Future<List<Student>> downloadFuture;
 
   @override
   void initState() {
     super.initState();
     isLoading = true;
+    downloadFuture = Future<List<Student>>.delayed(Duration(seconds: 5), () {
+      return [
+        Student(firstName: 'Ali', lastName: 'Ata', age: 18),
+        Student(firstName: 'Veli', lastName: 'Gel', age: 21),
+        Student(
+          firstName: 'Ayşe',
+          lastName: 'Yilmaz',
+          age: 21,
+          graduated: true,
+        ),
+      ];
+    });
+
+    handleDownload();
   }
+
+  Future<void> handleDownload() async {
+    print('runs early');
+    final theStudents = await downloadFuture;
+    print('runs 5 seconds later');
+
+    setState(() {
+      isLoading = false;
+      students = theStudents;
+    });
+  }
+
+  // void handleDownload() {
+  //   downloadFuture.then((theNames) {
+  //     setState(() {
+  //       isLoading = false;
+  //       names = theNames;
+  //     });
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -143,16 +216,24 @@ class _MyHomePageState extends State<MyHomePage> {
                 ColoredBox(
                   color: Colors.purpleAccent,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
+                    onPressed: () async {
+                      Student? s = await Navigator.of(context).push<Student>(
                         MaterialPageRoute(
                           builder: (context) {
                             return StackPage();
                           },
                         ),
                       );
+                      print('Stack gave me $s');
+                      if (s != null) {
+                        setState(() {
+                          students.add(s);
+                        });
+                      } else {
+                        print('Gave me a null student!');
+                      }
                     },
-                    child: Text('just setstate'),
+                    child: Text('navigate'),
                   ),
                 ),
                 Expanded(
@@ -162,9 +243,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Column(
                             children: [
                               SizedBox(height: 20),
-                              ...names.map(
-                                (e) => Text(e, style: TextStyle(fontSize: 30)),
-                              ),
+                              ...students.map((e) => StudentListView(e)),
                               // if (val.length % 5 != 4) CounterWidget(val),
                               // val.length % 5 == 4 ? Text('hidden') : CounterWidget(val),
                               Padding(
@@ -175,35 +254,27 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                         ),
                 ),
-                ColoredBox(
-                  color: Colors.purpleAccent,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        names = ['ali', 'veli', 'ahmet', 'ayşe', 'fatma'];
-                        isLoading = false;
-                      });
-                    },
-                    child: Text('just setstate'),
-                  ),
-                ),
                 Text('hello'),
               ],
             ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            val += '.';
-          });
-          setState(() {
-            names.add(names[names.length % 5]);
-          });
-        },
-        tooltip: 'Increment',
-        child: const Icon(Icons.ac_unit_sharp),
+    );
+  }
+}
+
+class StudentListView extends StatelessWidget {
+  const StudentListView(this.student, {super.key});
+
+  final Student student;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text('${student.firstName} ${student.lastName}'),
+      subtitle: Text(
+        'Age: ${student.age} ${student.graduated ? 'GRADUATED' : ''}',
       ),
     );
   }
