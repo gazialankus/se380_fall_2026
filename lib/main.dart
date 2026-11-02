@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:se380_during_lecture/other.dart';
+import 'package:se380_during_lecture/stack_page.dart';
 
 int i = 10;
 
@@ -110,10 +111,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String val = '';
+  var names = <String>[];
+  var isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    isLoading = true;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final names = ['ali', 'veli', 'ahmet', 'ayşe', 'fatma'];
+    final header = [for (int i = 0; i < 28; ++i) 'aaa'];
 
     return Scaffold(
       appBar: AppBar(
@@ -121,54 +130,66 @@ class _MyHomePageState extends State<MyHomePage> {
 
         title: Text("SE 380"),
       ),
-      body: Center(
-        child: SizedBox(
-          width: 180,
-          height: 300,
-          child: Stack(
-            fit: StackFit.passthrough,
-            children: [
-              ColoredBox(
-                color: Colors.yellow,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ColoredBox(
-                    color: Colors.red,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        // Row(
-                        //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        //   children: [
-                        //     Text('r'),
-                        //     Column(children: [Text('a'), Text('b'), Text('c')]),
-                        //     Text('r'),
-                        //   ],
-                        // ),
-                        SizedBox(height: 20),
-                        ...names.map((e) => Text(e)),
-                        // if (val.length % 5 != 4) CounterWidget(val),
-                        // val.length % 5 == 4 ? Text('hidden') : CounterWidget(val),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 40),
-                          child: Text("outside: $val"),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {});
+      body: ColoredBox(
+        color: Colors.red,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ColoredBox(
+            color: Colors.yellow,
+            child: Column(
+              // mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ColoredBox(
+                  color: Colors.purpleAccent,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return StackPage();
                           },
-                          child: Text('just setstate'),
                         ),
-                      ],
-                    ),
+                      );
+                    },
+                    child: Text('just setstate'),
                   ),
                 ),
-              ),
-
-              Positioned(child: Text('HELLO ON STACK'), bottom: 50),
-            ],
+                Expanded(
+                  child: isLoading
+                      ? Center(child: CircularProgressIndicator())
+                      : SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              SizedBox(height: 20),
+                              ...names.map(
+                                (e) => Text(e, style: TextStyle(fontSize: 30)),
+                              ),
+                              // if (val.length % 5 != 4) CounterWidget(val),
+                              // val.length % 5 == 4 ? Text('hidden') : CounterWidget(val),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 40),
+                                child: Text("outside: $val"),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
+                ColoredBox(
+                  color: Colors.purpleAccent,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        names = ['ali', 'veli', 'ahmet', 'ayşe', 'fatma'];
+                        isLoading = false;
+                      });
+                    },
+                    child: Text('just setstate'),
+                  ),
+                ),
+                Text('hello'),
+              ],
+            ),
           ),
         ),
       ),
@@ -176,6 +197,9 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: () {
           setState(() {
             val += '.';
+          });
+          setState(() {
+            names.add(names[names.length % 5]);
           });
         },
         tooltip: 'Increment',
